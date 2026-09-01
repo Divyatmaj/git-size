@@ -1,0 +1,20 @@
+{
+  "name": "cli-git-size",
+  "version": "1.0.3",
+  "description": "A tool that helps you see the actual size of the project that you have built",
+  "license": "ISC",
+  "author": "DJ",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "gsize": "./index.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^15.0.0"
+  }
+}
