@@ -1,316 +1,150 @@
 # gsize
 
-A simple Node.js CLI tool that scans a project directory and helps you
-understand which files are taking up space.
+[![npm](https://img.shields.io/npm/v/cli-git-size)](https://www.npmjs.com/package/cli-git-size)
+[![CI](https://github.com/Divyatmaj/git-size/actions/workflows/ci.yml/badge.svg)](https://github.com/Divyatmaj/git-size/actions/workflows/ci.yml)
 
-## Features
-
--   Scan project files recursively
--   Ignore `.git` and `.gitignore`
--   Sort files by size
--   Find the smallest N files
--   Find the largest N files
--   Calculate total project size
--   Display results in a terminal table
--   Format file sizes as Bytes, KB, MB, GB, etc.
--   Output data as JSON
--   Colored terminal output using Chalk
+A small Node.js CLI that shows which files are taking up space in your
+project. Inside a git repository it respects `.gitignore`, so you see the
+size of what you actually built, not your build output or dependencies.
 
 ## Installation
 
-Install the package globally with npm:
-
-``` bash
+```bash
 npm install -g cli-git-size
 ```
 
-After installation, the CLI command is:
-
-``` bash
-gsize
-```
+Requires Node.js 22.12 or newer. The command is `gsize`.
 
 ## Usage
 
-Run the command from the directory/project you want to analyze:
-
-``` bash
-gsize
+```bash
+gsize [options] [path]
 ```
 
-### Show help
+With no options, `gsize` lists every file in the current folder, largest
+first. Pass a path to scan a different folder:
 
-``` bash
-gsize --help
-```
-
-### Sort by size --- ascending
-
-``` bash
-gsize -s
-```
-
-or:
-
-``` bash
-gsize --sortAsc
-```
-
-### Sort by size --- descending
-
-``` bash
-gsize -d
-```
-
-or:
-
-``` bash
-gsize --sortDesc
-```
-
-### Show the smallest N files
-
-``` bash
-gsize -l 5
-```
-
-or:
-
-``` bash
-gsize --last 5
-```
-
-If no number is provided, the command uses all scanned files.
-
-### Show the largest N files
-
-``` bash
-gsize -f 5
-```
-
-or:
-
-``` bash
-gsize --first 5
-```
-
-If no number is provided, the command uses all scanned files.
-
-### Show total project size
-
-``` bash
-gsize -t
-```
-
-The result is displayed using a human-readable size such as `10.94 KB`,
-`2.4 MB`, etc.
-
-### Output as JSON
-
-``` bash
-gsize -j
-```
-
-or:
-
-``` bash
-gsize --json
+```bash
+gsize                 # current folder, largest first
+gsize ./src           # a different folder
+gsize -f 10           # the 10 largest files
+gsize -l 5            # the 5 smallest files
+gsize -s -f 10        # the 10 largest files, listed smallest first
+gsize -t              # total size
+gsize -t -f 10        # total size of the 10 largest files
+gsize -j -f 5 | jq    # JSON output
+gsize --max-depth 1   # only files at the top level
 ```
 
 ## Options
 
-  Option              Description
-  ------------------- -------------------------------------------
-  `-s, --sortAsc`     Sort files by size in ascending order
-  `-d, --sortDesc`    Sort files by size in descending order
-  `-l, --last [n]`    Show the smallest N files
-  `-f, --first [n]`   Show the largest N files
-  `-t, --totSize`     Show the total size of the scanned folder
-  `-j, --json`        Show the file data in JSON format
-  `-h, --help`        Show help information
+| Option              | Description                                              |
+| ------------------- | -------------------------------------------------------- |
+| `-f, --first [n]`   | Show the N largest files                                 |
+| `-l, --last [n]`    | Show the N smallest files                                |
+| `-s, --sortAsc`     | Order the output smallest first                          |
+| `-d, --sortDesc`    | Order the output largest first (default)                 |
+| `-t, --totSize`     | Show the total size of the selected files                |
+| `-j, --json`        | Print the output as JSON                                 |
+| `--max-depth <n>`   | Only look N folder levels deep (`1` = top level only)    |
+| `--no-gitignore`    | Scan every file, ignoring `.gitignore` rules             |
+| `-v, --version`     | Print the version                                        |
+| `-h, --help`        | Show help                                                |
+
+Options can be combined: `-f`/`-l` choose which files, `-s`/`-d` choose
+the order, and `-t` and `-j` apply to that selection. `-f` and `-l` cannot
+be used together, nor can `-s` and `-d`.
+
+Warnings (for example, asking for more files than exist) go to stderr, so
+`--json` output is always valid JSON.
+
+### What gets scanned
+
+- Inside a git repository, files are listed with
+  `git ls-files --cached --others --exclude-standard`: tracked files plus
+  untracked files that `.gitignore` does not exclude.
+- Outside a git repository, or with `--no-gitignore`, the folder is
+  walked directly.
+- `.git`, `.gitignore` and `node_modules` are always skipped, as are
+  symbolic links.
 
 ## Example
 
-Running:
-
-``` bash
-gsize -f 5
+```text
+$ gsize -f 5
+┌──────┬────────────────────────────────────┬──────────────┐
+│ No.  │ File                               │ Size         │
+├──────┼────────────────────────────────────┼──────────────┤
+│ 1    │ package-lock.json                  │ 5.82 KB      │
+├──────┼────────────────────────────────────┼──────────────┤
+│ 2    │ README.md                          │ 4.1 KB       │
+├──────┼────────────────────────────────────┼──────────────┤
+│ 3    │ cli.js                             │ 3.56 KB      │
+├──────┼────────────────────────────────────┼──────────────┤
+│ 4    │ Scanner.js                         │ 3.13 KB      │
+├──────┼────────────────────────────────────┼──────────────┤
+│ 5    │ Formatter.js                       │ 1.77 KB      │
+└──────┴────────────────────────────────────┴──────────────┘
 ```
 
-can produce a table similar to:
+Sizes are green under 1 MB, yellow under 10 MB, and red above that.
 
-``` text
-┌─────┬────────────────────┬─────────┐
-│ No. │ File               │ Size    │
-├─────┼────────────────────┼─────────┤
-│ 1   │ package-lock.json  │ 5.82 KB │
-│ 2   │ index.js           │ 1.71 KB │
-│ 3   │ Formatter.js       │ 1.44 KB │
-│ 4   │ Analyzer.js        │ 1.01 KB │
-│ 5   │ Scanner.js         │ 735 B   │
-└─────┴────────────────────┴─────────┘
+## Using it as a library
+
+```js
+const { scanDirectory, getTopN, calculateTotalSize, formatBytes } = require("cli-git-size");
+
+const files = scanDirectory("./my-project", { maxDepth: 3 });
+console.log(getTopN(files, 5));
+console.log(formatBytes(calculateTotalSize(files)));
 ```
 
-## Project Structure
+| Export                                  | Description                                                       |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `scanDirectory(dir, options?)`          | Returns `[{ path, size }]`. Options: `gitignore` (default `true`), `maxDepth` |
+| `sortBySizeA(files)` / `sortBySizeD(files)` | Sorted copy, smallest / largest first                         |
+| `getTopN(files, n)` / `getBottomN(files, n)` | The N largest / smallest files                               |
+| `calculateTotalSize(files)`             | Sum of all sizes in bytes                                         |
+| `formatBytes(bytes)`                    | Human-readable size, such as `2.4 MB`                             |
+| `mkTable(files, { width? })`            | The terminal table as a string                                    |
+| `formatJSON(value)`                     | Pretty-printed JSON                                               |
 
-``` text
-cli-git-size/
-├── index.js
-├── Scanner.js
-├── Analyzer.js
-├── Formatter.js
-├── package.json
-├── package-lock.json
-└── README.md
+None of these functions modify the array you pass in. `Scanner`,
+`Analyzer` and `Formatter` can also be required individually, for example
+`require("cli-git-size/Scanner")`.
+
+## Project structure
+
+```text
+cli.js        the gsize command (argument parsing and output)
+lib.js        library entry point
+Scanner.js    finds files and their sizes
+Analyzer.js   sorting, top/bottom N, totals
+Formatter.js  table, colours, JSON, byte formatting
+test/         tests (node:test)
 ```
-
-### `index.js`
-
-The CLI entry point.
-
-Responsible for:
-
--   Defining Commander options
--   Reading user input
--   Calling the scanner
--   Calling analyzer functions
--   Passing results to the formatter
--   Printing the final output
-
-### `Scanner.js`
-
-Responsible for recursively scanning directories and collecting:
-
-``` js
-{
-    path: "path/to/file",
-    size: 1234
-}
-```
-
-It currently ignores:
-
-``` text
-.git
-.gitignore
-```
-
-### `Analyzer.js`
-
-Contains the analysis functions:
-
--   `sortBySizeA(arr)` --- sorts files by size in ascending order
--   `sortBySizeD(arr)` --- sorts files by size in descending order
--   `getBottomN(arr, n)` --- returns the smallest N files
--   `getBiglN(arr, n)` --- returns the largest N files
--   `calculateTotalSize(arr)` --- calculates the total size of all
-    scanned files
-
-### `Formatter.js`
-
-Responsible for converting analyzed data into user-friendly terminal
-output.
-
-Current formatter functionality includes:
-
--   `formatBytes(bytes)` --- converts bytes into readable units
--   `formatSize(arr)` --- formats file-size values
--   `formatJSON(arr)` --- prepares JSON output
--   `mkTable(arr)` --- creates the terminal table
--   `colourSize(...)` --- adds color to size output
-
-## Architecture
-
-The project follows a simple pipeline:
-
-``` text
-User
-  │
-  ▼
-index.js
-  │
-  ▼
-Scanner.js
-  │
-  │  [{ path, size }, ...]
-  ▼
-Analyzer.js
-  │
-  │  sorted / filtered / calculated data
-  ▼
-Formatter.js
-  │
-  ▼
-Terminal Output
-```
-
-This separation keeps scanning, analysis, and presentation logic
-independent.
-
-## Dependencies
-
-The project currently uses:
-
--   [Commander](https://www.npmjs.com/package/commander) --- CLI
-    argument parsing
--   [cli-table3](https://www.npmjs.com/package/cli-table3) --- terminal
-    tables
--   [Chalk](https://www.npmjs.com/package/chalk) --- terminal colors
 
 ## Development
 
-Clone the repository and install dependencies:
-
-``` bash
+```bash
 npm install
+npm test
+npm link      # makes your local copy available as `gsize`
 ```
 
-For local CLI testing, link the package:
+## Releasing
 
-``` bash
-npm link
+CI runs the tests on every push and pull request. To publish a new
+version to npm:
+
+```bash
+npm version patch   # or minor / major; creates a commit and a vX.Y.Z tag
+git push --follow-tags
 ```
 
-Then run:
-
-``` bash
-gsize --help
-```
-
-After making changes, you can test the local linked version without
-publishing a new npm version.
-
-## Publishing
-
-To create a new patch version:
-
-``` bash
-npm version patch
-```
-
-Then publish:
-
-``` bash
-npm publish
-```
-
-## Future Improvements
-
-Possible future additions:
-
--   Folder-size analysis
--   Combining multiple options
--   Better error handling
--   Progress indicators for large projects
--   Configurable ignored files/directories
--   More output formats
--   Performance improvements for very large projects
+Pushing the tag runs the tests and then publishes to npm. This needs an
+`NPM_TOKEN` secret in the GitHub repository settings.
 
 ## License
 
-ISC
-
-## Author
-
-DJ
-# git-size
+ISC. See [LICENSE](LICENSE).
