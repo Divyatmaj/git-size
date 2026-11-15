@@ -1,16 +1,31 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const toIgnore=['.git','gitignore','node_modules']
+const toIgnore = ['.git', '.gitignore', 'node_modules'];
 
 function scanDirectory(directory, filesPathSize=[]) {
-    const items = fs.readdirSync(directory);
+    let items;
+    try {
+        items = fs.readdirSync(directory);
+    } catch (err) {
+        return filesPathSize;
+    }
+
     for (const item of items) {
         if (toIgnore.includes(item)) {
             continue;
         }
 
-        const fullPath = path.join(directory, item); 
-        const stats = fs.statSync(fullPath);
+        const fullPath = path.join(directory, item);
+        let stats;
+        try {
+            stats = fs.lstatSync(fullPath);
+        } catch (err) {
+            continue;
+        }
+
+        if (stats.isSymbolicLink()) {
+            continue;
+        }
 
         if (stats.isDirectory()) {
             scanDirectory(fullPath, filesPathSize);

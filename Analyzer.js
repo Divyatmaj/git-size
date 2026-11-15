@@ -14,7 +14,7 @@ function getBottomN(arr,n){
     if(n<=arr1.length){
         return arr1.slice(0,n);
     }else{
-        console.log(`The Folder contains less than ${n} values,these are the smallest files`)
+        console.error(`The Folder contains less than ${n} values,these are the smallest files`)
         return arr1;
     }
 }
@@ -25,8 +25,8 @@ function getBiglN(arr,n){
     if(n<=arr1.length){
         return arr1.slice(-n).reverse();
     }else{
-        console.log(`The Folder contains less than ${n} values,these are the largest files`)
-        return arr1;
+        console.error(`The Folder contains less than ${n} values,these are the largest files`)
+        return arr1.slice().reverse();
     }
 }
 
