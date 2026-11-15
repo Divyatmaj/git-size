@@ -1,67 +1,62 @@
 const Table = require("cli-table3");
 const chalk = require("chalk");
 
-//or we can also import dependancies like bytes or filesize to calculate this part :)
+const NUM_WIDTH = 6;
+const SIZE_WIDTH = 14;
+const BORDERS = 4;
+const MIN_FILE_WIDTH = 20;
+
+// Could also use a dependency such as `bytes` or `filesize` for this.
 function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 Bytes';
 
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-function formatSize(arr){
-    return arr.map((obj)=>{
-        return {
-            path: obj.path,
-            size:formatBytes(obj.size)
-        }
-    });
+function formatSize(arr) {
+    return arr.map((obj) => ({
+        path: obj.path,
+        size: formatBytes(obj.size),
+    }));
 }
 
-
-function formatJSON(arr){
-    return JSON.stringify(arr,null,2);
+function formatJSON(value) {
+    return JSON.stringify(value, null, 2);
 }
 
-
-function mkTable(arr) {
+// Builds the results table. The file column fills the terminal width and
+// long paths wrap instead of being cut off.
+function mkTable(arr, { width = process.stdout.columns || 80 } = {}) {
+    const fileWidth = Math.max(MIN_FILE_WIDTH, width - NUM_WIDTH - SIZE_WIDTH - BORDERS);
     const table = new Table({
-        head: [
-            chalk.bold("No."),
-            chalk.bold("File"),
-            chalk.bold("Size")
-        ],
-        colWidths: [6, 50, 15]
+        head: [chalk.bold("No."), chalk.bold("File"), chalk.bold("Size")],
+        colWidths: [NUM_WIDTH, fileWidth, SIZE_WIDTH],
+        wordWrap: true,
+        wrapOnWordBoundary: false,
+        style: { head: [] },
     });
 
     arr.forEach((obj, index) => {
-        table.push([
-            index + 1,
-            obj.path,
-            colourSize(obj.size)
-        ]);
+        table.push([index + 1, obj.path, colourSize(obj.size)]);
     });
     return table.toString();
 }
 
 function colourSize(size) {
-
     const formattedSize = formatBytes(size);
 
     if (size < 1024 * 1024) {
         return chalk.green(formattedSize);
     }
-
     if (size < 10 * 1024 * 1024) {
         return chalk.yellow(formattedSize);
     }
-
     return chalk.red(formattedSize);
 }
 
-
-module.exports = {formatBytes,formatSize,formatJSON,mkTable,colourSize}
+module.exports = { formatBytes, formatSize, formatJSON, mkTable, colourSize };

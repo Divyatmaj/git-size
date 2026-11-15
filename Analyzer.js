@@ -1,45 +1,38 @@
-//sorts in ascending order
-function sortBySizeA(arr){
-    return arr.sort((elem1,elem2)=> elem1.size-elem2.size);
+// All functions return new arrays and never modify the array passed in.
+
+const bySizeAsc = (a, b) => a.size - b.size;
+const bySizeDesc = (a, b) => b.size - a.size;
+
+// Sorts in ascending order (smallest first)
+function sortBySizeA(arr) {
+    return [...arr].sort(bySizeAsc);
 }
 
-//sorts in descending order
-function sortBySizeD(arr){
-    return arr.sort((elem1,elem2)=> elem2.size-elem1.size);
+// Sorts in descending order (largest first)
+function sortBySizeD(arr) {
+    return [...arr].sort(bySizeDesc);
 }
 
-//get the small n files in folder
-function getBottomN(arr,n){
-    let arr1 = sortBySizeA(arr);
-    if(n<=arr1.length){
-        return arr1.slice(0,n);
-    }else{
-        console.error(`The Folder contains less than ${n} values,these are the smallest files`)
-        return arr1;
-    }
+// The N smallest files, smallest first. Returns every file if N exceeds the count.
+function getBottomN(arr, n) {
+    return sortBySizeA(arr).slice(0, n);
 }
 
-//get the Big n files in files
-function getBiglN(arr,n){
-    let arr1 = sortBySizeA(arr);
-    if(n<=arr1.length){
-        return arr1.slice(-n).reverse();
-    }else{
-        console.error(`The Folder contains less than ${n} values,these are the largest files`)
-        return arr1.slice().reverse();
-    }
+// The N largest files, largest first. Returns every file if N exceeds the count.
+function getTopN(arr, n) {
+    return sortBySizeD(arr).slice(0, n);
 }
 
-function calculateTotalSize(arr){
-    return arr.reduce((acc,elem)=>{return acc+elem.size;},0);
+function calculateTotalSize(arr) {
+    return arr.reduce((acc, elem) => acc + elem.size, 0);
 }
-
-
 
 module.exports = {
     sortBySizeA,
     sortBySizeD,
     getBottomN,
-    getBiglN,
-    calculateTotalSize
+    getTopN,
+    /** @deprecated use getTopN */
+    getBiglN: getTopN,
+    calculateTotalSize,
 };

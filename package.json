@@ -5,12 +5,22 @@
   "license": "ISC",
   "author": "DJ",
   "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "main": "lib.js",
+  "exports": {
+    ".": "./lib.js",
+    "./Scanner": "./Scanner.js",
+    "./Scanner.js": "./Scanner.js",
+    "./Analyzer": "./Analyzer.js",
+    "./Analyzer.js": "./Analyzer.js",
+    "./Formatter": "./Formatter.js",
+    "./Formatter.js": "./Formatter.js",
+    "./package.json": "./package.json"
   },
   "bin": {
-    "gsize": "./index.js"
+    "gsize": "cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "chalk": "^4.1.2",
