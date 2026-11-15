@@ -18,6 +18,16 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+// The reverse of formatBytes: "1.5MB", "500 kb", "200" (bytes) -> number of bytes.
+// Returns NaN for anything it cannot read.
+function parseSize(text) {
+    const match = /^\s*(\d+(?:\.\d+)?)\s*(b|bytes?|kb?|mb?|gb?|tb?)?\s*$/i.exec(String(text));
+    if (!match) return NaN;
+    const unit = (match[2] || "b").toLowerCase()[0];
+    const power = { b: 0, k: 1, m: 2, g: 3, t: 4 }[unit];
+    return Math.round(parseFloat(match[1]) * Math.pow(1024, power));
+}
+
 function formatSize(arr) {
     return arr.map((obj) => ({
         path: obj.path,
@@ -47,6 +57,24 @@ function mkTable(arr, { width = process.stdout.columns || 80 } = {}) {
     return table.toString();
 }
 
+// Table for --by-dir / --by-type results: [{ name, files, size }].
+function mkGroupTable(groups, { label = "Name", width = process.stdout.columns || 80 } = {}) {
+    const filesWidth = 9;
+    const nameWidth = Math.max(MIN_FILE_WIDTH, width - NUM_WIDTH - filesWidth - SIZE_WIDTH - BORDERS - 1);
+    const table = new Table({
+        head: [chalk.bold("No."), chalk.bold(label), chalk.bold("Files"), chalk.bold("Size")],
+        colWidths: [NUM_WIDTH, nameWidth, filesWidth, SIZE_WIDTH],
+        wordWrap: true,
+        wrapOnWordBoundary: false,
+        style: { head: [] },
+    });
+
+    groups.forEach((g, index) => {
+        table.push([index + 1, g.name, g.files, colourSize(g.size)]);
+    });
+    return table.toString();
+}
+
 function colourSize(size) {
     const formattedSize = formatBytes(size);
 
@@ -59,4 +87,4 @@ function colourSize(size) {
     return chalk.red(formattedSize);
 }
 
-module.exports = { formatBytes, formatSize, formatJSON, mkTable, colourSize };
+module.exports = { formatBytes, parseSize, formatSize, formatJSON, mkTable, mkGroupTable, colourSize };

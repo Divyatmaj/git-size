@@ -20,3 +20,19 @@ test("mkTable does not cut off long paths", () => {
 test("mkTable works with an empty list", () => {
     assert.equal(typeof mkTable([]), "string");
 });
+
+const { parseSize } = require("..");
+
+test("parseSize reads plain bytes and units", () => {
+    assert.equal(parseSize("200"), 200);
+    assert.equal(parseSize("1KB"), 1024);
+    assert.equal(parseSize("1.5mb"), 1572864);
+    assert.equal(parseSize("2 GB"), 2 * 1024 ** 3);
+    assert.equal(parseSize("10k"), 10240);
+});
+
+test("parseSize returns NaN for nonsense", () => {
+    assert.ok(Number.isNaN(parseSize("big")));
+    assert.ok(Number.isNaN(parseSize("-5MB")));
+    assert.ok(Number.isNaN(parseSize("")));
+});

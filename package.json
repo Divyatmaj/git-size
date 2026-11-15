@@ -1,6 +1,6 @@
 {
   "name": "cli-git-size",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "See which files make your project big: list files by size, respecting .gitignore",
   "keywords": [
     "cli",

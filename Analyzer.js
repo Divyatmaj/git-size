@@ -27,6 +27,42 @@ function calculateTotalSize(arr) {
     return arr.reduce((acc, elem) => acc + elem.size, 0);
 }
 
+// Files at least `minBytes` big.
+function filterMinSize(arr, minBytes) {
+    return arr.filter((f) => f.size >= minBytes);
+}
+
+// Groups files by a key and returns [{ name, files, size }], largest first.
+function groupBy(arr, keyOf) {
+    const groups = new Map();
+    for (const f of arr) {
+        const name = keyOf(f);
+        const g = groups.get(name) || { name, files: 0, size: 0 };
+        g.files += 1;
+        g.size += f.size;
+        groups.set(name, g);
+    }
+    return sortBySizeD([...groups.values()]);
+}
+
+// Totals per top-level folder; files directly in the root are grouped as ".".
+function groupByDir(arr) {
+    return groupBy(arr, (f) => {
+        const parts = f.path.split(/[\\/]/);
+        return parts.length > 1 ? parts[0] + "/" : ".";
+    });
+}
+
+// Totals per file extension (".js", ".png", ...); files without one are "(none)".
+// Dotfiles such as ".env" count as having no extension.
+function groupByType(arr) {
+    return groupBy(arr, (f) => {
+        const base = f.path.split(/[\\/]/).pop();
+        const dot = base.lastIndexOf(".");
+        return dot > 0 ? base.slice(dot).toLowerCase() : "(none)";
+    });
+}
+
 module.exports = {
     sortBySizeA,
     sortBySizeD,
@@ -35,4 +71,7 @@ module.exports = {
     /** @deprecated use getTopN */
     getBiglN: getTopN,
     calculateTotalSize,
+    filterMinSize,
+    groupByDir,
+    groupByType,
 };

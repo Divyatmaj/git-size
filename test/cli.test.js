@@ -77,3 +77,36 @@ test("requiring the package does not run the CLI", () => {
     assert.equal(r.stdout, "");
     assert.equal(r.status, 0);
 });
+
+const grouped = makeTree({ "src/a.js": "x".repeat(100), "src/b.js": "x".repeat(50), "docs/readme.md": "x".repeat(10), "top.txt": "x" });
+function gsizeIn(cwd, ...args) {
+    const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+    return { code: r.status, stdout: r.stdout, stderr: r.stderr };
+}
+
+test("--by-dir totals folders", () => {
+    const out = JSON.parse(gsizeIn(grouped, "--by-dir", "-j").stdout);
+    assert.deepEqual(out.map((g) => [g.name, g.size]), [["src/", 150], ["docs/", 10], [".", 1]]);
+});
+
+test("--by-type totals extensions and works with -f", () => {
+    const out = JSON.parse(gsizeIn(grouped, "--by-type", "-f", "1", "-j").stdout);
+    assert.deepEqual(out, [{ name: ".js", files: 2, size: 150 }]);
+});
+
+test("--by-dir and --by-type conflict", () => {
+    assert.notEqual(gsizeIn(grouped, "--by-dir", "--by-type").code, 0);
+});
+
+test("--min-size hides small files", () => {
+    const out = JSON.parse(gsizeIn(grouped, "--min-size", "50", "-j").stdout);
+    assert.deepEqual(out.map((f) => f.size), [100, 50]);
+    assert.notEqual(gsizeIn(grouped, "--min-size", "huge").code, 0);
+});
+
+test("--max-total exits 1 only when the project is over the limit", () => {
+    const over = gsizeIn(grouped, "-t", "--max-total", "100");
+    assert.equal(over.code, 1);
+    assert.match(over.stderr, /over the 100 Bytes limit/);
+    assert.equal(gsizeIn(grouped, "-t", "--max-total", "1KB").code, 0);
+});

@@ -34,6 +34,10 @@ gsize -t              # total size
 gsize -t -f 10        # total size of the 10 largest files
 gsize -j -f 5 | jq    # JSON output
 gsize --max-depth 1   # only files at the top level
+gsize --by-dir        # total size of each top-level folder
+gsize --by-type -f 5  # the 5 file types that take the most space
+gsize --min-size 1MB  # only files of 1 MB or more
+gsize -t --max-total 50MB   # exit code 1 if the project is over 50 MB
 ```
 
 ## Options
@@ -48,12 +52,33 @@ gsize --max-depth 1   # only files at the top level
 | `-j, --json`        | Print the output as JSON                                 |
 | `--max-depth <n>`   | Only look N folder levels deep (`1` = top level only)    |
 | `--no-gitignore`    | Scan every file, ignoring `.gitignore` rules             |
+| `--by-dir`          | Show the total size of each top-level folder             |
+| `--by-type`         | Show the total size of each file type (`.js`, `.png`, ...) |
+| `--min-size <size>` | Only include files at least this big                     |
+| `--max-total <size>`| Exit with code 1 if the project is bigger than this      |
 | `-v, --version`     | Print the version                                        |
 | `-h, --help`        | Show help                                                |
 
 Options can be combined: `-f`/`-l` choose which files, `-s`/`-d` choose
 the order, and `-t` and `-j` apply to that selection. `-f` and `-l` cannot
 be used together, nor can `-s` and `-d`.
+
+With `--by-dir` or `--by-type`, `-f`, `-l`, `-s`, `-d`, `-t` and `-j`
+work on the folders or file types instead of single files. Files directly
+in the scanned folder are grouped as `.`.
+
+Sizes can be written as plain bytes (`500`) or with a unit: `200KB`,
+`1.5MB`, `2GB` (units are powers of 1024 and not case-sensitive).
+
+### Using gsize as a CI check
+
+`--max-total` makes `gsize` fail when the project grows past a limit. The
+limit always applies to every scanned file, even when `-f`, `-l` or
+`--min-size` narrow down what is shown:
+
+```yaml
+- run: npx cli-git-size -t --max-total 20MB
+```
 
 Warnings (for example, asking for more files than exist) go to stderr, so
 `--json` output is always valid JSON.
@@ -105,8 +130,12 @@ console.log(formatBytes(calculateTotalSize(files)));
 | `sortBySizeA(files)` / `sortBySizeD(files)` | Sorted copy, smallest / largest first                         |
 | `getTopN(files, n)` / `getBottomN(files, n)` | The N largest / smallest files                               |
 | `calculateTotalSize(files)`             | Sum of all sizes in bytes                                         |
+| `filterMinSize(files, bytes)`           | Files at least `bytes` big                                        |
+| `groupByDir(files)` / `groupByType(files)` | `[{ name, files, size }]` per top-level folder / extension, largest first |
+| `parseSize(text)`                       | `"1.5MB"` to bytes (`NaN` if invalid)                             |
 | `formatBytes(bytes)`                    | Human-readable size, such as `2.4 MB`                             |
 | `mkTable(files, { width? })`            | The terminal table as a string                                    |
+| `mkGroupTable(groups, { label?, width? })` | Table for `groupByDir` / `groupByType` results                 |
 | `formatJSON(value)`                     | Pretty-printed JSON                                               |
 
 None of these functions modify the array you pass in. `Scanner`,

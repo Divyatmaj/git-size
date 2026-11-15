@@ -44,3 +44,34 @@ test("calculateTotalSize sums sizes", () => {
     assert.equal(calculateTotalSize(files()), 60);
     assert.equal(calculateTotalSize([]), 0);
 });
+
+const { filterMinSize, groupByDir, groupByType } = require("..");
+
+const tree = [
+    { path: "README.md", size: 5 },
+    { path: "src/a.js", size: 10 },
+    { path: "src/lib/b.JS", size: 20 },
+    { path: "img/logo.png", size: 100 },
+    { path: ".env", size: 1 },
+];
+
+test("filterMinSize keeps files at or above the limit", () => {
+    assert.deepEqual(paths(filterMinSize(tree, 10)), ["src/a.js", "src/lib/b.JS", "img/logo.png"]);
+});
+
+test("groupByDir totals each top-level folder, largest first", () => {
+    assert.deepEqual(groupByDir(tree), [
+        { name: "img/", files: 1, size: 100 },
+        { name: "src/", files: 2, size: 30 },
+        { name: ".", files: 2, size: 6 },
+    ]);
+});
+
+test("groupByType totals each extension, case-insensitively", () => {
+    assert.deepEqual(groupByType(tree), [
+        { name: ".png", files: 1, size: 100 },
+        { name: ".js", files: 2, size: 30 },
+        { name: ".md", files: 1, size: 5 },
+        { name: "(none)", files: 1, size: 1 },
+    ]);
+});
