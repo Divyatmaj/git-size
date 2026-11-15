@@ -48,7 +48,8 @@ function run(directory, options) {
     }
 
     // Show paths relative to the folder being scanned.
-    const files = scanDirectory(directory).map((f) => ({ ...f, path: path.relative(directory, f.path) }));
+    const scanOptions = { gitignore: options.gitignore, maxDepth: options.maxDepth };
+    const files = scanDirectory(directory, scanOptions).map((f) => ({ ...f, path: path.relative(directory, f.path) }));
     const result = selectFiles(files, options);
 
     const requested = options.first ?? options.last;
@@ -81,7 +82,8 @@ program
     .name("gsize")
     .description(
         "List the files in a project by size, largest first.\n" +
-        "Skips .git, .gitignore and node_modules."
+        "In a git repo, files excluded by .gitignore are skipped.\n" +
+        ".git, .gitignore and node_modules are always skipped."
     )
     .version(version, "-v, --version")
     .argument("[path]", "folder to scan", ".")
@@ -91,6 +93,8 @@ program
     .addOption(new Option("-d, --sortDesc", "order the output largest first").conflicts("sortAsc"))
     .option("-t, --totSize", "show the total size of the selected files")
     .option("-j, --json", "print the output as JSON")
+    .option("--max-depth <n>", "only look N folder levels deep (1 = top level only)", parseCount)
+    .option("--no-gitignore", "scan every file, ignoring .gitignore rules")
     .action(run);
 
 if (require.main === module) {
